@@ -3,22 +3,18 @@ def min_team_members(N, M, difficulties):
     dp = [float('inf')] * (1 << N)
     dp[0] = 0  # 아무 문제도 풀지 않은 상태는 팀원이 필요하지 않음
 
-    # 모든 문제의 난이도 조합을 탐색합니다.
+    # 모든 상태를 탐색하며 dp를 업데이트합니다.
     for mask in range(1 << N):
-        # 현재 상태에서 각 문제를 풀어 가능한 다음 상태를 만듭니다.
-        for i in range(N):
-            if mask & (1 << i) == 0:  # 아직 풀지 않은 문제라면
-                next_mask = mask | (1 << i)
-                sum_difficulty = difficulties[i]
-
-                # 남은 문제를 팀원이 풀 수 있는지 체크
-                for j in range(i + 1, N):
-                    if next_mask & (1 << j) == 0 and sum_difficulty + difficulties[j] <= M:
-                        next_mask |= (1 << j)
-                        sum_difficulty += difficulties[j]
-
-                # DP 업데이트
-                dp[next_mask] = min(dp[next_mask], dp[mask] + 1)
+        if dp[mask] == float('inf'):
+            continue
+        # 팀원이 풀 수 있는 문제들의 부분 집합을 구합니다.
+        for i in range(1 << N):
+            subset_sum = 0
+            for j in range(N):
+                if i & (1 << j) and not (mask & (1 << j)):
+                    subset_sum += difficulties[j]
+            if subset_sum <= M:
+                dp[mask | i] = min(dp[mask | i], dp[mask] + 1)
 
     # 모든 문제를 풀기 위한 최소 팀원 수를 반환
     return dp[(1 << N) - 1] if dp[(1 << N) - 1] != float('inf') else -1
