@@ -2,181 +2,155 @@
 #define fastio ios::sync_with_stdio(0); cin.tie(0); cout.tie(0);
 using namespace std;
 
-int dx[4] = {-1, 1, 0, 0};
-int dy[4] = {0, 0, -1, 1};
+int N, M, K, ans;
+int board[10][10];
+int next_board[10][10];
 
-int N, M, K;
-int miro[10][10];
-int mv_time = 0;
+pair<int, int> runners[11];
+pair<int, int> exits;
 
-pair<int, int> exit_pos;
-vector<pair<int, int>> runners;
+int sx, sy, square_size;
 
-// 출구 기준 거리 계산용 BFS
-pair<int, int> getNextMove(pair<int, int> start) {
-    queue<pair<int, int>> q;
-    bool visited[10][10] = {};
-    pair<int, int> from[10][10];
-    int dist[10][10] = {};
+void mvRunners() {
+    for (int i = 0; i < M; i++) {
+        if (runners[i] == exits) continue;
 
-    q.push(start);
-    visited[start.first][start.second] = true;
-    from[start.first][start.second] = {-1, -1};
+        int x = runners[i].first;
+        int y = runners[i].second;
 
-    while (!q.empty()) {
-        pair<int, int> cur = q.front(); q.pop();
-        int x = cur.first, y = cur.second;
-
-        if (x == exit_pos.first && y == exit_pos.second) {
-            pair<int, int> now = cur;
-            while (from[now.first][now.second] != start) {
-                now = from[now.first][now.second];
+        // 행 이동
+        if (x != exits.first) {
+            int nx = x + (x < exits.first ? 1 : -1);
+            if (!board[nx][y]) {
+                runners[i] = make_pair(nx, y);
+                ans++;
+                continue;
             }
-            return now;
         }
 
-        for (int d = 0; d < 4; d++) {
-            int nx = x + dx[d], ny = y + dy[d];
-            if (nx < 0 || nx >= N || ny < 0 || ny >= N) continue;
-            if (visited[nx][ny]) continue;
-            if (miro[nx][ny] >= 1 && miro[nx][ny] <= 9) continue;
-
-            visited[nx][ny] = true;
-            from[nx][ny] = {x, y};
-            dist[nx][ny] = dist[x][y] + 1;
-            q.push({nx, ny});
-        }
-    }
-    return start; // 이동 불가
-}
-
-int getDistance() {
-    int total = 0;
-    for (int i = 0; i < runners.size(); i++) {
-        pair<int, int> r = runners[i];
-        queue<pair<int, int>> q;
-        bool visited[10][10] = {};
-        int dist[10][10] = {};
-
-        q.push(r);
-        visited[r.first][r.second] = true;
-
-        while (!q.empty()) {
-            pair<int, int> cur = q.front(); q.pop();
-            int x = cur.first, y = cur.second;
-
-            if (x == exit_pos.first && y == exit_pos.second) {
-                total += dist[x][y];
-                break;
-            }
-
-            for (int d = 0; d < 4; d++) {
-                int nx = x + dx[d], ny = y + dy[d];
-                if (nx < 0 || nx >= N || ny < 0 || ny >= N) continue;
-                if (visited[nx][ny]) continue;
-                if (miro[nx][ny] >= 1 && miro[nx][ny] <= 9) continue;
-
-                visited[nx][ny] = true;
-                dist[nx][ny] = dist[x][y] + 1;
-                q.push({nx, ny});
+        // 열 이동
+        if (y != exits.second) {
+            int ny = y + (y < exits.second ? 1 : -1);
+            if (!board[x][ny]) {
+                runners[i] = make_pair(x, ny);
+                ans++;
+                continue;
             }
         }
     }
-    return total;
 }
 
-void moveRunners() {
-    vector<pair<int, int>> updated;
-    for (int i = 0; i < runners.size(); i++) {
-        pair<int, int> r = runners[i];
-        if (r == exit_pos) continue;
-        pair<int, int> nxt = getNextMove(r);
-        if (nxt == exit_pos) continue;
-        updated.push_back(nxt);
-    }
-    runners = updated;
-}
+void findSquare() {
+    for (int sz = 2; sz <= N; sz++) {
+        for (int x1 = 0; x1 <= N - sz; x1++) {
+            for (int y1 = 0; y1 <= N - sz; y1++) {
+                int x2 = x1 + sz - 1;
+                int y2 = y1 + sz - 1;
 
-// 회전 가능한 가장 작은 정사각형 영역 찾기
-pair<int, int> findTopLeft(int size) {
-    for (int i = 0; i <= N - size; i++) {
-        for (int j = 0; j <= N - size; j++) {
-            for (int x = i; x < i + size; x++) {
-                for (int y = j; y < j + size; y++) {
-                    if (make_pair(x, y) == exit_pos) return {i, j};
-                    for (int k = 0; k < runners.size(); k++) {
-                        if (runners[k] == make_pair(x, y)) return {i, j};
+                if (!(x1 <= exits.first && exits.first <= x2 &&
+                      y1 <= exits.second && exits.second <= y2)) {
+                    continue;
+                }
+
+                bool is_runner = false;
+                for (int i = 0; i < M; i++) {
+                    int rx = runners[i].first;
+                    int ry = runners[i].second;
+                    if (x1 <= rx && rx <= x2 && y1 <= ry && ry <= y2 &&
+                        runners[i] != exits) {
+                        is_runner = true;
+                        break;
                     }
+                }
+
+                if (is_runner) {
+                    sx = x1;
+                    sy = y1;
+                    square_size = sz;
+                    return;
                 }
             }
         }
     }
-    return {-1, -1};
 }
 
-void rotateSquare(int sx, int sy, int size) {
-    int tmp[10][10];
-    for (int i = 0; i < size; i++) {
-        for (int j = 0; j < size; j++) {
-            tmp[j][size - 1 - i] = miro[sx + i][sy + j];
+void rotateBoard() {
+    for (int x = sx; x < sx + square_size; x++) {
+        for (int y = sy; y < sy + square_size; y++) {
+            if (board[x][y]) board[x][y]--;
         }
     }
-    for (int i = 0; i < size; i++) {
-        for (int j = 0; j < size; j++) {
-            miro[sx + i][sy + j] = tmp[i][j];
-            if (miro[sx + i][sy + j] >= 1) miro[sx + i][sy + j]--;
+
+    for (int x = sx; x < sx + square_size; x++) {
+        for (int y = sy; y < sy + square_size; y++) {
+            int ox = x - sx, oy = y - sy;
+            int rx = oy, ry = square_size - ox - 1;
+            next_board[rx + sx][ry + sy] = board[x][y];
         }
     }
-    // 러너, 출구 회전
-    for (int i = 0; i < runners.size(); i++) {
-        int x = runners[i].first, y = runners[i].second;
-        if (x >= sx && x < sx + size && y >= sy && y < sy + size) {
-            int nx = sx + (y - sy);
-            int ny = sy + (size - 1 - (x - sx));
-            runners[i] = {nx, ny};
+
+    for (int x = sx; x < sx + square_size; x++) {
+        for (int y = sy; y < sy + square_size; y++) {
+            board[x][y] = next_board[x][y];
         }
-    }
-    int x = exit_pos.first, y = exit_pos.second;
-    if (x >= sx && x < sx + size && y >= sy && y < sy + size) {
-        int nx = sx + (y - sy);
-        int ny = sy + (size - 1 - (x - sx));
-        exit_pos = {nx, ny};
     }
 }
 
-void rotate() {
-    for (int size = 1; size <= N; size++) {
-        pair<int, int> topleft = findTopLeft(size);
-        if (topleft.first != -1) {
-            rotateSquare(topleft.first, topleft.second, size);
-            break;
+void rotateAll() {
+    for (int i = 0; i < M; i++) {
+        int x = runners[i].first;
+        int y = runners[i].second;
+
+        if (sx <= x && x < sx + square_size && sy <= y && y < sy + square_size) {
+            int ox = x - sx, oy = y - sy;
+            int rx = oy, ry = square_size - ox - 1;
+            runners[i] = make_pair(rx + sx, ry + sy);
         }
+    }
+
+    int x = exits.first;
+    int y = exits.second;
+
+    if (sx <= x && x < sx + square_size && sy <= y && y < sy + square_size) {
+        int ox = x - sx, oy = y - sy;
+        int rx = oy, ry = square_size - ox - 1;
+        exits = make_pair(rx + sx, ry + sy);
     }
 }
 
 int main() {
     fastio;
     cin >> N >> M >> K;
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
-            cin >> miro[i][j];
-        }
-    }
+
+    for (int i = 0; i < N; i++)
+        for (int j = 0; j < N; j++)
+            cin >> board[i][j];
+
     for (int i = 0; i < M; i++) {
-        int a, b; cin >> a >> b;
-        runners.push_back({a - 1, b - 1});
+        cin >> runners[i].first >> runners[i].second;
+        runners[i].first--; runners[i].second--;
     }
-    int ex1, ex2;
-    cin >> ex1 >> ex2;
-    exit_pos = {ex1 - 1, ex2 - 1};
+
+    cin >> exits.first >> exits.second;
+    exits.first--; exits.second--;
 
     while (K--) {
-        if (runners.empty()) break;
-        mv_time += getDistance();
-        moveRunners();
-        rotate();
+        mvRunners();
+
+        bool all_escaped = true;
+        for (int i = 0; i < M; i++) {
+            if (runners[i] != exits) {
+                all_escaped = false;
+                break;
+            }
+        }
+        if (all_escaped) break;
+
+        findSquare();
+        rotateBoard();
+        rotateAll();
     }
 
-    cout << mv_time << '\n';
-    cout << exit_pos.first + 1 << ' ' << exit_pos.second + 1 << '\n';
+    cout << ans << '\n';
+    cout << exits.first + 1 << ' ' << exits.second + 1 << '\n';
 }
