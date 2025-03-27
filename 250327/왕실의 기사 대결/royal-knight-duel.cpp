@@ -40,33 +40,33 @@ bool update(int idx, int dir) {
             return false;
         }
 
-        // 함정이나 다른 조각들과 충돌하는지 체크
+        // 함정이나 벽 충돌 확인
         for (int i = nr[x]; i <= nr[x] + h[x] -1; i++) {
             for (int j = nc[x]; j <= nc[x] + w[x] - 1; j++) {
-                if (board[i][j] == 1) 
-                    dmg[x]++;
                 if (board[i][j] == 2) 
                     return false;
+                if (board[i][j] == 1) 
+                    dmg[x]++;
             }
         }
 
-        // 다른 조각과 충돌 시 연쇄 이동
+        // 연쇄 이동
         for(int i = 1; i <= N; i++) {
-            if(is_moved[i] || k[i] <= 0) 
-                continue;
-            if(r[i] > nr[x] + h[x] - 1 || nr[x] > r[i] + h[i] - 1) 
-                continue;
-            if(c[i] > nc[x] + w[x] - 1 || nc[x] > c[i] + w[i] - 1) 
-                continue;
+            if(is_moved[i] || k[i] <= 0) continue;
+            if(r[i] > nr[x] + h[x] - 1 || nr[x] > r[i] + h[i] - 1) continue;
+            if(c[i] > nc[x] + w[x] - 1 || nc[x] > c[i] + w[i] - 1) continue;
 
             is_moved[i] = true;
             q.push(i);
         }
     }
 
+    // 공격자는 피해 없음
     dmg[idx] = 0;
+
     return true;
 }
+
 
 // 특정 조각 지정된 방향으로 이동 
 void canMove(int idx, int dir) {
