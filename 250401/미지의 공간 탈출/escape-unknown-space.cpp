@@ -19,7 +19,7 @@ vector<EVENT> event_list;
 int wall_start_x, wall_start_y, exit_x, exit_y, machine_x, machine_y;
 
 //그래프 관련 변수
-int num = 1;
+int num = 0;
 int space_node_num[20][20];
 int time_node_num[5][10][10];
 int graph[900][4]; //[출발 노드 번호][동서남북] = 도착 노드 번호
@@ -67,7 +67,7 @@ void make_graph() {
 		}
 	}
 
-	num -= 1;
+	//num -= 1;
 
 	for (int i = 0; i < 900; i++) {
 		for (int j = 0; j < 4; j++) graph[i][j] = -1;
