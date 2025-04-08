@@ -65,8 +65,8 @@ bool update(int idx, int dir) {
 		// 다른 기사와 충돌 시 연쇄 이동
 		for (int i = 1; i <= N; i++) {
 			if (is_moved[i] || k[i] <= 0) continue;
-			if (r[i] > nr[i] + h[i] - 1 || nr[i] > r[i] + h[i] - 1) continue;
-			if (c[i] > nc[i] + w[i] - 1 || nc[i] > c[i] + w[i] - 1) continue;
+			if (r[i] > nr[cur] + h[cur] - 1 || nr[cur] > r[i] + h[i] - 1) continue;
+			if (c[i] > nc[cur] + w[cur] - 1 || nc[cur] > c[i] + w[i] - 1) continue;
 
 			is_moved[i] = true;
 			q.push(i);
